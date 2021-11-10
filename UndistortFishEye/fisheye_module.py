@@ -3,9 +3,11 @@ import cv2
 import glob
 import pickle
 import numpy as np
-
+import matplotlib.pyplot as plt
 # Size of the chessboard used for calibration
+
 CHESSBOARD_SIZE = (6, 9)
+
 
 # Calculate curvature for each horizontal and vertical curves from the chessboard
 # Return: curvature integral
@@ -30,6 +32,7 @@ def chessboard_measure(corners):
         curvature_integral += np.sum(curvature)
     return curvature_integral
 
+
 # Chessboard detection on the image loaded from the given file
 # If saveDetection==True an image with the result of the detection is saved to the disk
 # Return: success status (True or False), corners detected in image coordinates, size of the image
@@ -42,6 +45,7 @@ def detect_chessboard(img_path, save_detection):
             cv2.imwrite(chess_path, img)
 
     return ret, corners, img_shape
+
 
 # Chessboard detection on input opencv image
 # If showChessboard==True(default) we draw corners and lines on input image
@@ -62,6 +66,7 @@ def detect_chessboard_img(img, showChessboard=True):
 
     return ret, corners, img_shape
 
+
 # Show deformation measure on source image and undistorted image
 # The less the better (no deformation means perfect straight lines which means 0 curvature)
 def deformation_measure(src_image, undistorted_img):
@@ -78,11 +83,13 @@ def deformation_measure(src_image, undistorted_img):
     print('Deformation measure on undistorted image: ' + str(m2))
     print('Correction rate in percent: ' + str(r))
 
+
 def evaluate(img_path, calibration_path):
     src_image = cv2.imread(img_path)
     k, d, dims = load_calibration(calibration_path)
     undistorted_img = undistort(src_image, k, d, dims)
     deformation_measure(src_image, undistorted_img)
+
 
 # Launch calibration process from all png images in the given folder
 # Return: calibration parameters K, D and image dimensions
@@ -172,6 +179,14 @@ def undistort(src_image, k, d, dims):
     dim1 = src_image.shape[:2][::-1]  # dim1 is the dimension of input image to un-distort
     assert dim1[0] / dim1[1] == dims[0] / dims[1], "Image to undistort needs to have same aspect ratio as the ones used in calibration"
     map1, map2 = cv2.fisheye.initUndistortRectifyMap(k, d, np.eye(3), k, dims, cv2.CV_16SC2)
+
+    plt.figure('1')
+    plt.subplot(131), plt.imshow(map1[:,:,0]), plt.title('map 0')
+    plt.subplot(132), plt.imshow(map1[:,:,1]), plt.title('map 1')
+    plt.subplot(133), plt.imshow(map2), plt.title('map 2')
+    plt.show()
+
+
     undistorted_img = cv2.remap(src_image, map1, map2, interpolation=cv2.INTER_LINEAR, borderMode=cv2.BORDER_CONSTANT)
     return undistorted_img
 
